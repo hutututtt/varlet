@@ -6,7 +6,20 @@ var context = {
 };
 reactive(context);
 var Context = reactive(context);
-var toNumber = (val) => {
+const isString = (val) => typeof val === "string";
+const isBoolean = (val) => typeof val === "boolean";
+const isNumber = (val) => typeof val === "number";
+const isPlainObject = (val) => Object.prototype.toString.call(val) === "[object Object]";
+const isObject = (val) => typeof val === "object" && val !== null;
+const isArray = (val) => Array.isArray(val);
+const isURL = (val) => {
+  if (!val) {
+    return false;
+  }
+  return /^(http)|(\.*\/)/.test(val);
+};
+const isEmpty = (val) => val === void 0 || val === null || val === "" || Array.isArray(val) && !val.length;
+const toNumber = (val) => {
   if (val == null)
     return 0;
   if (isString(val)) {
@@ -14,55 +27,24 @@ var toNumber = (val) => {
     val = Number.isNaN(val) ? 0 : val;
     return val;
   }
-  if (isBool(val))
+  if (isBoolean(val))
     return Number(val);
   return val;
 };
-var isHTMLSupportImage = (val) => {
-  if (val == null) {
-    return false;
-  }
-  return val.startsWith("data:image") || /\.(png|jpg|gif|jpeg|svg)$/.test(val);
-};
-var isHTMLSupportVideo = (val) => {
-  if (val == null) {
-    return false;
-  }
-  return val.startsWith("data:video") || /\.(mp4|webm|ogg)$/.test(val);
-};
-var isString = (val) => typeof val === "string";
-var isBool = (val) => typeof val === "boolean";
-var isNumber = (val) => typeof val === "number";
-var isPlainObject = (val) => Object.prototype.toString.call(val) === "[object Object]";
-var isObject = (val) => typeof val === "object" && val !== null;
-var isArray = (val) => Array.isArray(val);
-var isURL = (val) => {
-  if (!val) {
-    return false;
-  }
-  return /^(http)|(\.*\/)/.test(val);
-};
-var isEmpty = (val) => val === void 0 || val === null || val === "" || Array.isArray(val) && !val.length;
-var removeItem = (arr, item) => {
+const removeItem = (arr, item) => {
   if (arr.length) {
-    var index = arr.indexOf(item);
+    const index = arr.indexOf(item);
     if (index > -1) {
       return arr.splice(index, 1);
     }
   }
 };
-var throttle = function(method, mustRunDelay) {
-  if (mustRunDelay === void 0) {
-    mustRunDelay = 200;
-  }
-  var timer;
-  var start = 0;
-  return function loop() {
-    for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
-      args[_key] = arguments[_key];
-    }
-    var now = Date.now();
-    var elapsed = now - start;
+const throttle = (method, mustRunDelay = 200) => {
+  let timer;
+  let start = 0;
+  return function loop(...args) {
+    const now = Date.now();
+    const elapsed = now - start;
     if (!start) {
       start = now;
     }
@@ -79,62 +61,13 @@ var throttle = function(method, mustRunDelay) {
     }
   };
 };
-var createCache = (max2) => {
-  var cache = [];
-  return {
-    cache,
-    has(key) {
-      return this.cache.includes(key);
-    },
-    add(key) {
-      if (this.has(key)) {
-        return;
-      }
-      this.cache.length === max2 && cache.shift();
-      this.cache.push(key);
-    },
-    remove(key) {
-      this.has(key) && removeItem(this.cache, key);
-    },
-    clear() {
-      this.cache.length = 0;
-    }
-  };
-};
-var linear = (value) => value;
-var cubic = (value) => Math.pow(value, 3);
-var easeInOutCubic = (value) => value < 0.5 ? cubic(value * 2) / 2 : 1 - cubic((1 - value) * 2) / 2;
-function parseFormat(format, time) {
-  var scannedTimes = Object.values(time);
-  var scannedFormats = ["DD", "HH", "mm", "ss"];
-  var padValues = [24, 60, 60, 1e3];
-  scannedFormats.forEach((scannedFormat, index) => {
-    if (!format.includes(scannedFormat)) {
-      scannedTimes[index + 1] += scannedTimes[index] * padValues[index];
-    } else {
-      format = format.replace(scannedFormat, String(scannedTimes[index]).padStart(2, "0"));
-    }
-  });
-  if (format.includes("S")) {
-    var ms = String(scannedTimes[scannedTimes.length - 1]).padStart(3, "0");
-    if (format.includes("SSS")) {
-      format = format.replace("SSS", ms);
-    } else if (format.includes("SS")) {
-      format = format.replace("SS", ms.slice(0, 2));
-    } else {
-      format = format.replace("S", ms.slice(0, 1));
-    }
-  }
-  return format;
-}
-var dt = (value, defaultText) => value == null ? defaultText : value;
-var inBrowser = () => typeof window !== "undefined";
-var uniq = (arr) => [...new Set(arr)];
-function kebabCase(str) {
-  var ret = str.replace(/([A-Z])/g, " $1").trim();
+const inBrowser = () => typeof window !== "undefined";
+const uniq = (arr) => [...new Set(arr)];
+const kebabCase = (s) => {
+  const ret = s.replace(/([A-Z])/g, " $1").trim();
   return ret.split(" ").join("-").toLowerCase();
-}
-function asyncGeneratorStep$c(gen, resolve, reject, _next, _throw, key, arg) {
+};
+function asyncGeneratorStep$d(gen, resolve, reject, _next, _throw, key, arg) {
   try {
     var info = gen[key](arg);
     var value = info.value;
@@ -148,16 +81,16 @@ function asyncGeneratorStep$c(gen, resolve, reject, _next, _throw, key, arg) {
     Promise.resolve(value).then(_next, _throw);
   }
 }
-function _asyncToGenerator$c(fn) {
+function _asyncToGenerator$d(fn) {
   return function() {
     var self = this, args = arguments;
     return new Promise(function(resolve, reject) {
       var gen = fn.apply(self, args);
       function _next(value) {
-        asyncGeneratorStep$c(gen, resolve, reject, _next, _throw, "next", value);
+        asyncGeneratorStep$d(gen, resolve, reject, _next, _throw, "next", value);
       }
       function _throw(err) {
-        asyncGeneratorStep$c(gen, resolve, reject, _next, _throw, "throw", err);
+        asyncGeneratorStep$d(gen, resolve, reject, _next, _throw, "throw", err);
       }
       _next(void 0);
     });
@@ -187,7 +120,7 @@ function inViewport(_x) {
   return _inViewport.apply(this, arguments);
 }
 function _inViewport() {
-  _inViewport = _asyncToGenerator$c(function* (element) {
+  _inViewport = _asyncToGenerator$d(function* (element) {
     yield doubleRaf();
     var {
       top,
@@ -278,6 +211,17 @@ var toSizeUnit = (value) => {
   }
   return toPxNum(value) + "px";
 };
+var multiplySizeUnit = function(value, quantity) {
+  if (quantity === void 0) {
+    quantity = 1;
+  }
+  if (value == null) {
+    return void 0;
+  }
+  var legalSize = toSizeUnit(value);
+  var unit = legalSize.match(/(vh|%|rem|px|vw)$/)[0];
+  return "" + parseFloat(legalSize) * quantity + unit;
+};
 function requestAnimationFrame(fn) {
   return globalThis.requestAnimationFrame ? globalThis.requestAnimationFrame(fn) : globalThis.setTimeout(fn, 16);
 }
@@ -335,7 +279,7 @@ function supportTouch() {
   return inBrowser2 && "ontouchstart" in window;
 }
 var _excluded = ["collect", "clear"];
-function asyncGeneratorStep$b(gen, resolve, reject, _next, _throw, key, arg) {
+function asyncGeneratorStep$c(gen, resolve, reject, _next, _throw, key, arg) {
   try {
     var info = gen[key](arg);
     var value = info.value;
@@ -349,16 +293,16 @@ function asyncGeneratorStep$b(gen, resolve, reject, _next, _throw, key, arg) {
     Promise.resolve(value).then(_next, _throw);
   }
 }
-function _asyncToGenerator$b(fn) {
+function _asyncToGenerator$c(fn) {
   return function() {
     var self = this, args = arguments;
     return new Promise(function(resolve, reject) {
       var gen = fn.apply(self, args);
       function _next(value) {
-        asyncGeneratorStep$b(gen, resolve, reject, _next, _throw, "next", value);
+        asyncGeneratorStep$c(gen, resolve, reject, _next, _throw, "next", value);
       }
       function _throw(err) {
-        asyncGeneratorStep$b(gen, resolve, reject, _next, _throw, "throw", err);
+        asyncGeneratorStep$c(gen, resolve, reject, _next, _throw, "throw", err);
       }
       _next(void 0);
     });
@@ -545,7 +489,7 @@ function keyInProvides(key) {
 function useValidation() {
   var errorMessage = ref("");
   var validate = /* @__PURE__ */ function() {
-    var _ref = _asyncToGenerator$b(function* (rules, value, apis) {
+    var _ref = _asyncToGenerator$c(function* (rules, value, apis) {
       if (!isArray(rules) || !rules.length) {
         return true;
       }
@@ -566,7 +510,7 @@ function useValidation() {
     errorMessage.value = "";
   };
   var validateWithTrigger = /* @__PURE__ */ function() {
-    var _ref2 = _asyncToGenerator$b(function* (validateTrigger, trigger, rules, value, apis) {
+    var _ref2 = _asyncToGenerator$c(function* (validateTrigger, trigger, rules, value, apis) {
       if (validateTrigger.includes(trigger)) {
         (yield validate(rules, value, apis)) && (errorMessage.value = "");
       }
@@ -789,11 +733,20 @@ function unmounted(el) {
   document.removeEventListener("touchcancel", el._ripple.removeRipple);
 }
 function updated$1(el, binding) {
-  var _binding$value3, _binding$value$touchm2, _binding$value4;
-  el._ripple = _extends$d({}, el._ripple, (_binding$value3 = binding.value) != null ? _binding$value3 : {}, {
-    touchmoveForbid: (_binding$value$touchm2 = (_binding$value4 = binding.value) == null ? void 0 : _binding$value4.touchmoveForbid) != null ? _binding$value$touchm2 : Context.touchmoveForbid,
-    tasker: null
-  });
+  var _binding$value$touchm2, _binding$value3, _binding$value4, _binding$value5, _el$_ripple, _el$_ripple2, _el$_ripple3;
+  var newBinding = {
+    touchmoveForbid: (_binding$value$touchm2 = (_binding$value3 = binding.value) == null ? void 0 : _binding$value3.touchmoveForbid) != null ? _binding$value$touchm2 : Context.touchmoveForbid,
+    color: (_binding$value4 = binding.value) == null ? void 0 : _binding$value4.color,
+    disabled: (_binding$value5 = binding.value) == null ? void 0 : _binding$value5.disabled
+  };
+  var diff2 = newBinding.touchmoveForbid !== ((_el$_ripple = el._ripple) == null ? void 0 : _el$_ripple.touchmoveForbid) || newBinding.color !== ((_el$_ripple2 = el._ripple) == null ? void 0 : _el$_ripple2.color) || newBinding.disabled !== ((_el$_ripple3 = el._ripple) == null ? void 0 : _el$_ripple3.disabled);
+  if (diff2) {
+    var _el$_ripple4, _el$_ripple5;
+    el._ripple = _extends$d({
+      tasker: (_el$_ripple4 = el._ripple) == null ? void 0 : _el$_ripple4.tasker,
+      removeRipple: (_el$_ripple5 = el._ripple) == null ? void 0 : _el$_ripple5.removeRipple
+    }, newBinding);
+  }
 }
 var Ripple = {
   mounted: mounted$1,
@@ -1090,7 +1043,7 @@ var props$T = {
     type: Function
   }
 };
-function asyncGeneratorStep$a(gen, resolve, reject, _next, _throw, key, arg) {
+function asyncGeneratorStep$b(gen, resolve, reject, _next, _throw, key, arg) {
   try {
     var info = gen[key](arg);
     var value = info.value;
@@ -1104,16 +1057,16 @@ function asyncGeneratorStep$a(gen, resolve, reject, _next, _throw, key, arg) {
     Promise.resolve(value).then(_next, _throw);
   }
 }
-function _asyncToGenerator$a(fn) {
+function _asyncToGenerator$b(fn) {
   return function() {
     var self = this, args = arguments;
     return new Promise(function(resolve, reject) {
       var gen = fn.apply(self, args);
       function _next(value) {
-        asyncGeneratorStep$a(gen, resolve, reject, _next, _throw, "next", value);
+        asyncGeneratorStep$b(gen, resolve, reject, _next, _throw, "next", value);
       }
       function _throw(err) {
-        asyncGeneratorStep$a(gen, resolve, reject, _next, _throw, "throw", err);
+        asyncGeneratorStep$b(gen, resolve, reject, _next, _throw, "throw", err);
       }
       _next(void 0);
     });
@@ -1145,7 +1098,7 @@ var Icon = defineComponent({
     var nextName = ref("");
     var shrinking = ref(false);
     var handleNameChange = /* @__PURE__ */ function() {
-      var _ref = _asyncToGenerator$a(function* (newName, oldName) {
+      var _ref = _asyncToGenerator$b(function* (newName, oldName) {
         var {
           transition
         } = props2;
@@ -1231,6 +1184,44 @@ var props$S = _extends$b({
   "onClickOverlay",
   "onRouteChange"
 ]));
+var isHTMLSupportImage = (val) => {
+  if (val == null) {
+    return false;
+  }
+  return val.startsWith("data:image") || /\.(png|jpg|gif|jpeg|svg)$/.test(val);
+};
+var isHTMLSupportVideo = (val) => {
+  if (val == null) {
+    return false;
+  }
+  return val.startsWith("data:video") || /\.(mp4|webm|ogg)$/.test(val);
+};
+var createCache = (max2) => {
+  var cache = [];
+  return {
+    cache,
+    has(key) {
+      return this.cache.includes(key);
+    },
+    add(key) {
+      if (this.has(key)) {
+        return;
+      }
+      this.cache.length === max2 && cache.shift();
+      this.cache.push(key);
+    },
+    remove(key) {
+      this.has(key) && removeItem(this.cache, key);
+    },
+    clear() {
+      this.cache.length = 0;
+    }
+  };
+};
+var linear = (value) => value;
+var cubic = (value) => Math.pow(value, 3);
+var easeInOutCubic = (value) => value < 0.5 ? cubic(value * 2) / 2 : 1 - cubic((1 - value) * 2) / 2;
+var dt = (value, defaultText) => value == null ? defaultText : value;
 var zhCN = {
   dialogTitle: "\u63D0\u793A",
   dialogConfirmButtonText: "\u786E\u8BA4",
@@ -1683,10 +1674,10 @@ function render$W(_ctx, _cache) {
     key: 0,
     class: normalizeClass(_ctx.n("circle"))
   }, [createElementVNode("span", {
-    class: normalizeClass(_ctx.n("circle-block")),
+    class: normalizeClass(_ctx.classes(_ctx.n("circle-block"), _ctx.n("circle-block--" + _ctx.size))),
     style: normalizeStyle({
-      width: _ctx.getRadius * 2 + "px",
-      height: _ctx.getRadius * 2 + "px",
+      width: _ctx.multiplySizeUnit(_ctx.radius, 2),
+      height: _ctx.multiplySizeUnit(_ctx.radius, 2),
       color: _ctx.color
     })
   }, _hoisted_2$7, 6)], 2)) : createCommentVNode("v-if", true), (openBlock(true), createElementBlock(Fragment, null, renderList(_ctx.loadingTypeDict, (nums, key) => {
@@ -1726,15 +1717,6 @@ var Loading = defineComponent({
       rect: 8,
       disappear: 3
     };
-    var sizeDict = {
-      mini: 9,
-      small: 12,
-      normal: 15,
-      large: 18
-    };
-    var getRadius = computed(() => {
-      return props2.radius ? toNumber(props2.radius) : sizeDict[props2.size];
-    });
     var isShow = computed(() => {
       if (!call(slots.default))
         return true;
@@ -1743,8 +1725,8 @@ var Loading = defineComponent({
     return {
       n: n$Z,
       classes: classes$O,
+      multiplySizeUnit,
       loadingTypeDict,
-      getRadius,
       isShow
     };
   }
@@ -1940,17 +1922,18 @@ function render$U(_ctx, _cache) {
   return openBlock(), createBlock(Teleport, {
     to: "body",
     disabled: _ctx.disabled
-  }, [createElementVNode("div", {
-    class: normalizeClass(_ctx.classes(_ctx.n(), [_ctx.show, _ctx.n("--active")])),
+  }, [createElementVNode("div", mergeProps({
+    class: _ctx.classes(_ctx.n(), [_ctx.show, _ctx.n("--active")]),
     ref: "backTopEl",
-    style: normalizeStyle({
+    style: {
       right: _ctx.toSizeUnit(_ctx.right),
       bottom: _ctx.toSizeUnit(_ctx.bottom)
-    }),
+    }
+  }, _ctx.$attrs, {
     onClick: _cache[0] || (_cache[0] = withModifiers(function() {
       return _ctx.click && _ctx.click(...arguments);
     }, ["stop"]))
-  }, [renderSlot(_ctx.$slots, "default", {}, () => [createVNode(_component_var_button, {
+  }), [renderSlot(_ctx.$slots, "default", {}, () => [createVNode(_component_var_button, {
     type: "primary",
     round: "",
     "var-back-top-cover": ""
@@ -1959,7 +1942,7 @@ function render$U(_ctx, _cache) {
       name: "chevron-up"
     })]),
     _: 1
-  })])], 6)], 8, ["disabled"]);
+  })])], 16)], 8, ["disabled"]);
 }
 var BackTop = defineComponent({
   render: render$U,
@@ -1968,6 +1951,7 @@ var BackTop = defineComponent({
     VarButton: Button,
     VarIcon: Icon
   },
+  inheritAttrs: false,
   props: props$O,
   setup(props2) {
     var show = ref(false);
@@ -2110,7 +2094,7 @@ var Badge = defineComponent({
         icon: icon2
       } = props2;
       var positionBasic = slots.default && n$W("position") + " " + n$W("--" + position);
-      var dotClass = dot && n$W("dot");
+      var dotClass = dot ? n$W("dot") : null;
       var positionClass = getPositionClass();
       var iconClass = icon2 ? n$W("icon") : null;
       return [n$W("--" + type), positionBasic, dotClass, positionClass, iconClass];
@@ -2500,7 +2484,8 @@ var BottomNavigationItem = defineComponent({
       return active.value === name.value || active.value === index.value ? activeColor.value : inactiveColor.value;
     };
     var handleClick = () => {
-      var active2 = name.value || index.value;
+      var _name$value;
+      var active2 = (_name$value = name.value) != null ? _name$value : index.value;
       call(props2.onClick, active2);
       call(bottomNavigation2.onToggle, active2);
     };
@@ -2540,6 +2525,27 @@ var props$K = {
   height: {
     type: [String, Number]
   },
+  imageHeight: {
+    type: [String, Number]
+  },
+  imageWidth: {
+    type: [String, Number]
+  },
+  layout: {
+    type: String,
+    default: "column"
+  },
+  floating: {
+    type: Boolean,
+    default: false
+  },
+  "onUpdate:floating": {
+    type: Function
+  },
+  floatingDuration: {
+    type: Number,
+    default: 250
+  },
   alt: {
     type: String
   },
@@ -2563,28 +2569,82 @@ var props$K = {
     type: Function
   }
 };
+function asyncGeneratorStep$a(gen, resolve, reject, _next, _throw, key, arg) {
+  try {
+    var info = gen[key](arg);
+    var value = info.value;
+  } catch (error) {
+    reject(error);
+    return;
+  }
+  if (info.done) {
+    resolve(value);
+  } else {
+    Promise.resolve(value).then(_next, _throw);
+  }
+}
+function _asyncToGenerator$a(fn) {
+  return function() {
+    var self = this, args = arguments;
+    return new Promise(function(resolve, reject) {
+      var gen = fn.apply(self, args);
+      function _next(value) {
+        asyncGeneratorStep$a(gen, resolve, reject, _next, _throw, "next", value);
+      }
+      function _throw(err) {
+        asyncGeneratorStep$a(gen, resolve, reject, _next, _throw, "throw", err);
+      }
+      _next(void 0);
+    });
+  };
+}
 var {
   n: n$T,
   classes: classes$I
 } = createNamespace("card");
+var RIPPLE_DELAY = 500;
 var _hoisted_1$g = ["src", "alt"];
 function render$Q(_ctx, _cache) {
+  var _component_var_icon = resolveComponent("var-icon");
+  var _component_var_button = resolveComponent("var-button");
   var _directive_ripple = resolveDirective("ripple");
   return withDirectives((openBlock(), createElementBlock("div", {
-    class: normalizeClass(_ctx.classes(_ctx.n(), [_ctx.elevation, "var-elevation--" + _ctx.elevation, "var-elevation--2"])),
+    ref: "card",
+    class: normalizeClass(_ctx.classes(_ctx.n(), [_ctx.isRow, _ctx.n("--layout-row")], [_ctx.elevation, "var-elevation--" + _ctx.elevation, "var-elevation--1"])),
+    style: normalizeStyle({
+      zIndex: _ctx.floated ? _ctx.zIndex : void 0
+    }),
     onClick: _cache[0] || (_cache[0] = function() {
       return _ctx.onClick && _ctx.onClick(...arguments);
     })
-  }, [renderSlot(_ctx.$slots, "image", {}, () => [_ctx.src ? (openBlock(), createElementBlock("img", {
-    key: 0,
-    class: normalizeClass(_ctx.n("image")),
+  }, [createElementVNode("div", {
+    ref: "cardFloater",
+    class: normalizeClass(_ctx.classes(_ctx.n("floater"))),
     style: normalizeStyle({
-      objectFit: _ctx.fit,
-      height: _ctx.toSizeUnit(_ctx.height)
-    }),
-    src: _ctx.src,
-    alt: _ctx.alt
-  }, null, 14, _hoisted_1$g)) : createCommentVNode("v-if", true)]), renderSlot(_ctx.$slots, "title", {}, () => [_ctx.title ? (openBlock(), createElementBlock("div", {
+      width: _ctx.floaterWidth,
+      height: _ctx.floaterHeight,
+      top: _ctx.floaterTop,
+      left: _ctx.floaterLeft,
+      overflow: _ctx.floaterOverflow,
+      position: _ctx.floaterPosition,
+      transition: _ctx.floated ? "background-color " + _ctx.floatingDuration + "ms, width " + _ctx.floatingDuration + "ms, height " + _ctx.floatingDuration + "ms, top " + _ctx.floatingDuration + "ms, left " + _ctx.floatingDuration + "ms" : void 0
+    })
+  }, [renderSlot(_ctx.$slots, "image", {}, () => {
+    var _ctx$imageHeight;
+    return [_ctx.src ? (openBlock(), createElementBlock("img", {
+      key: 0,
+      class: normalizeClass(_ctx.n("image")),
+      style: normalizeStyle({
+        objectFit: _ctx.fit,
+        height: _ctx.toSizeUnit((_ctx$imageHeight = _ctx.imageHeight) != null ? _ctx$imageHeight : _ctx.height),
+        width: _ctx.toSizeUnit(_ctx.imageWidth)
+      }),
+      src: _ctx.src,
+      alt: _ctx.alt
+    }, null, 14, _hoisted_1$g)) : createCommentVNode("v-if", true)];
+  }), createElementVNode("div", {
+    class: normalizeClass(_ctx.n("container"))
+  }, [renderSlot(_ctx.$slots, "title", {}, () => [_ctx.title ? (openBlock(), createElementBlock("div", {
     key: 0,
     class: normalizeClass(_ctx.n("title"))
   }, toDisplayString(_ctx.title), 3)) : createCommentVNode("v-if", true)]), renderSlot(_ctx.$slots, "subtitle", {}, () => [_ctx.subtitle ? (openBlock(), createElementBlock("div", {
@@ -2596,8 +2656,42 @@ function render$Q(_ctx, _cache) {
   }, toDisplayString(_ctx.description), 3)) : createCommentVNode("v-if", true)]), _ctx.$slots.extra ? (openBlock(), createElementBlock("div", {
     key: 0,
     class: normalizeClass(_ctx.n("footer"))
-  }, [renderSlot(_ctx.$slots, "extra")], 2)) : createCommentVNode("v-if", true)], 2)), [[_directive_ripple, {
-    disabled: !_ctx.ripple
+  }, [renderSlot(_ctx.$slots, "extra")], 2)) : createCommentVNode("v-if", true), _ctx.$slots.content && !_ctx.isRow ? (openBlock(), createElementBlock("div", {
+    key: 1,
+    class: normalizeClass(_ctx.n("content")),
+    style: normalizeStyle({
+      height: _ctx.contentHeight,
+      opacity: _ctx.opacity,
+      transition: "opacity " + _ctx.floatingDuration * 2 + "ms"
+    })
+  }, [renderSlot(_ctx.$slots, "content")], 6)) : createCommentVNode("v-if", true)], 2), _ctx.showFloatingButtons ? (openBlock(), createElementBlock("div", {
+    key: 0,
+    class: normalizeClass(_ctx.classes(_ctx.n("floating-buttons"), "var--box")),
+    style: normalizeStyle({
+      zIndex: _ctx.zIndex,
+      opacity: _ctx.opacity,
+      transition: "opacity " + _ctx.floatingDuration * 2 + "ms"
+    })
+  }, [renderSlot(_ctx.$slots, "close-button", {}, () => [createVNode(_component_var_button, {
+    "var-card-cover": "",
+    round: "",
+    class: normalizeClass(_ctx.classes(_ctx.n("close-button"), "var-elevation--6")),
+    onClick: withModifiers(_ctx.close, ["stop"])
+  }, {
+    default: withCtx(() => [createVNode(_component_var_icon, {
+      "var-card-cover": "",
+      name: "window-close",
+      class: normalizeClass(_ctx.n("close-button-icon"))
+    }, null, 8, ["class"])]),
+    _: 1
+  }, 8, ["class", "onClick"])])], 6)) : createCommentVNode("v-if", true)], 6), createElementVNode("div", {
+    class: normalizeClass(_ctx.n("holder")),
+    style: normalizeStyle({
+      width: _ctx.holderWidth,
+      height: _ctx.holderHeight
+    })
+  }, null, 6)], 6)), [[_directive_ripple, {
+    disabled: !_ctx.ripple || _ctx.floater
   }]]);
 }
 var Card = defineComponent({
@@ -2606,12 +2700,131 @@ var Card = defineComponent({
   directives: {
     Ripple
   },
+  components: {
+    VarIcon: Icon,
+    VarButton: Button
+  },
   props: props$K,
-  setup() {
+  setup(props2) {
+    var card2 = ref(null);
+    var cardFloater = ref(null);
+    var holderWidth = ref("auto");
+    var holderHeight = ref("auto");
+    var floaterWidth = ref("100%");
+    var floaterHeight = ref("100%");
+    var floaterTop = ref("auto");
+    var floaterLeft = ref("auto");
+    var floaterPosition = ref(void 0);
+    var floaterOverflow = ref("hidden");
+    var contentHeight = ref("0px");
+    var opacity = ref("0");
+    var {
+      zIndex
+    } = useZIndex(() => props2.floating, 1);
+    var isRow = computed(() => props2.layout === "row");
+    var showFloatingButtons = ref(false);
+    var floated = ref(false);
+    useLock(() => props2.floating, () => isRow);
+    var dropdownFloaterTop = "auto";
+    var dropdownFloaterLeft = "auto";
+    var dropper = null;
+    var floater = ref(null);
+    var floating = /* @__PURE__ */ function() {
+      var _ref = _asyncToGenerator$a(function* () {
+        clearTimeout(floater.value);
+        clearTimeout(dropper);
+        floater.value = null;
+        floater.value = setTimeout(/* @__PURE__ */ _asyncToGenerator$a(function* () {
+          var {
+            width,
+            height,
+            left,
+            top
+          } = card2.value.getBoundingClientRect();
+          holderWidth.value = toSizeUnit(width);
+          holderHeight.value = toSizeUnit(height);
+          floaterWidth.value = holderWidth.value;
+          floaterHeight.value = holderHeight.value;
+          floaterTop.value = toSizeUnit(top);
+          floaterLeft.value = toSizeUnit(left);
+          floaterPosition.value = "fixed";
+          dropdownFloaterTop = floaterTop.value;
+          dropdownFloaterLeft = floaterLeft.value;
+          showFloatingButtons.value = true;
+          yield doubleRaf();
+          floaterTop.value = "0";
+          floaterLeft.value = "0";
+          floaterWidth.value = "100vw";
+          floaterHeight.value = "100vh";
+          contentHeight.value = "auto";
+          opacity.value = "1";
+          floaterOverflow.value = "auto";
+          floated.value = true;
+        }), props2.ripple ? RIPPLE_DELAY : 0);
+      });
+      return function floating2() {
+        return _ref.apply(this, arguments);
+      };
+    }();
+    var dropdown = () => {
+      clearTimeout(dropper);
+      clearTimeout(floater.value);
+      floater.value = null;
+      floaterWidth.value = holderWidth.value;
+      floaterHeight.value = holderHeight.value;
+      floaterTop.value = dropdownFloaterTop;
+      floaterLeft.value = dropdownFloaterLeft;
+      contentHeight.value = "0px";
+      opacity.value = "0";
+      showFloatingButtons.value = false;
+      dropper = setTimeout(() => {
+        holderWidth.value = "auto";
+        holderHeight.value = "auto";
+        floaterWidth.value = "100%";
+        floaterHeight.value = "100%";
+        floaterTop.value = "auto";
+        floaterLeft.value = "auto";
+        dropdownFloaterTop = "auto";
+        dropdownFloaterLeft = "auto";
+        floaterOverflow.value = "hidden";
+        floaterPosition.value = void 0;
+        floated.value = false;
+      }, props2.floatingDuration);
+    };
+    var close = () => {
+      call(props2["onUpdate:floating"], false);
+    };
+    watch(() => props2.floating, (value) => {
+      if (isRow.value)
+        return;
+      nextTick(() => {
+        value ? floating() : dropdown();
+      });
+    }, {
+      immediate: true
+    });
     return {
       n: n$T,
       classes: classes$I,
-      toSizeUnit
+      toSizeUnit,
+      card: card2,
+      cardFloater,
+      holderWidth,
+      holderHeight,
+      floater,
+      floaterWidth,
+      floaterHeight,
+      floaterTop,
+      floaterLeft,
+      floaterPosition,
+      floaterOverflow,
+      contentHeight,
+      opacity,
+      zIndex,
+      isRow,
+      close,
+      showFloatingButtons,
+      floated
     };
   }
 });
@@ -3779,6 +3992,29 @@ var Countdown = defineComponent({
       seconds: 0,
       milliseconds: 0
     });
+    var parseFormat = (format, time) => {
+      var scannedTimes = Object.values(time);
+      var scannedFormats = ["DD", "HH", "mm", "ss"];
+      var padValues = [24, 60, 60, 1e3];
+      scannedFormats.forEach((scannedFormat, index) => {
+        if (!format.includes(scannedFormat)) {
+          scannedTimes[index + 1] += scannedTimes[index] * padValues[index];
+        } else {
+          format = format.replace(scannedFormat, String(scannedTimes[index]).padStart(2, "0"));
+        }
+      });
+      if (format.includes("S")) {
+        var ms = String(scannedTimes[scannedTimes.length - 1]).padStart(3, "0");
+        if (format.includes("SSS")) {
+          format = format.replace("SSS", ms);
+        } else if (format.includes("SS")) {
+          format = format.replace("SS", ms.slice(0, 2));
+        } else {
+          format = format.replace("S", ms.slice(0, 1));
+        }
+      }
+      return format;
+    };
     var formatTime = (durationTime) => {
       var days = Math.floor(durationTime / DAY);
       var hours = Math.floor(durationTime % DAY / HOUR);
@@ -8621,7 +8857,7 @@ var Divider = defineComponent({
     var state = reactive({
       withText: false
     });
-    var isInset = computed(() => isBool(props2.inset) ? props2.inset : true);
+    var isInset = computed(() => isBoolean(props2.inset) ? props2.inset : true);
     var style = computed(() => {
       var {
         inset,
@@ -8631,7 +8867,7 @@ var Divider = defineComponent({
       var baseStyle = {
         margin
       };
-      if (isBool(inset) || inset === 0)
+      if (isBoolean(inset) || inset === 0)
         return _extends$5({}, baseStyle);
       var _inset = toNumber(inset);
       var absInsetWithUnit = Math.abs(_inset) + (inset + "").replace(_inset + "", "");
@@ -10325,7 +10561,7 @@ var props$q = {
     default: true
   },
   stickyOffsetTop: {
-    type: Number,
+    type: [String, Number],
     default: 0
   },
   cssMode: {
@@ -10405,7 +10641,7 @@ function render$r(_ctx, _cache) {
       style: normalizeStyle({
         color: _ctx.active === anchorName && _ctx.highlightColor ? _ctx.highlightColor : ""
       }),
-      onClick: ($event) => _ctx.anchorClick(anchorName)
+      onClick: ($event) => _ctx.anchorClick(anchorName, true)
     }, toDisplayString(anchorName), 15, _hoisted_1$a);
   }), 128))], 6)], 2);
 }
@@ -10426,7 +10662,7 @@ var IndexBar = defineComponent({
     var active = ref();
     var sticky2 = computed(() => props2.sticky);
     var cssMode = computed(() => props2.cssMode);
-    var stickyOffsetTop = computed(() => props2.stickyOffsetTop);
+    var stickyOffsetTop = computed(() => toPxNum(props2.stickyOffsetTop));
     var zIndex = computed(() => props2.zIndex);
     var indexBarProvider = {
       active,
@@ -10498,7 +10734,7 @@ var IndexBar = defineComponent({
       };
     }();
     var scrollTo$1 = (index) => {
-      requestAnimationFrame(() => anchorClick(index, true));
+      requestAnimationFrame(() => anchorClick(index));
     };
     watch(() => length.value, /* @__PURE__ */ _asyncToGenerator$5(function* () {
       yield doubleRaf();
@@ -10596,6 +10832,10 @@ var props$p = {
     default: false
   },
   resize: {
+    type: Boolean,
+    default: false
+  },
+  autofocus: {
     type: Boolean,
     default: false
   },
@@ -10855,7 +11095,8 @@ var Input = defineComponent({
     };
     var validate = () => v(props2.rules, props2.modelValue);
     var focus = () => {
-      el.value.focus();
+      var _el$value;
+      (_el$value = el.value) == null ? void 0 : _el$value.focus();
     };
     var blur = () => {
       el.value.blur();
@@ -10866,6 +11107,10 @@ var Input = defineComponent({
       resetValidation
     };
     call(bindForm, inputProvider);
+    onMounted(() => {
+      if (props2.autofocus)
+        focus();
+    });
     return {
       el,
       id,
@@ -12114,7 +12359,8 @@ var VarPicker = defineComponent({
       } = getPicked();
       prevIndexes = [...indexes];
     }, {
-      immediate: true
+      immediate: true,
+      deep: true
     });
     return {
       n: n$o,
@@ -12243,7 +12489,7 @@ var props$j = {
     default: false
   },
   size: {
-    type: Number,
+    type: [Number, String],
     default: 40
   },
   rotate: {
@@ -12271,7 +12517,7 @@ function render$l(_ctx, _cache) {
   }, [createElementVNode("div", mergeProps({
     class: _ctx.n("linear-block"),
     style: {
-      height: _ctx.lineWidth + "px"
+      height: _ctx.toSizeUnit(_ctx.lineWidth)
     }
   }, _ctx.$attrs), [_ctx.track ? (openBlock(), createElementBlock("div", {
     key: 0,
@@ -12292,8 +12538,8 @@ function render$l(_ctx, _cache) {
     key: 1,
     class: normalizeClass(_ctx.n("circle")),
     style: normalizeStyle({
-      width: _ctx.size + "px",
-      height: _ctx.size + "px"
+      width: _ctx.toSizeUnit(_ctx.size),
+      height: _ctx.toSizeUnit(_ctx.size)
     })
   }, [(openBlock(), createElementBlock("svg", {
     class: normalizeClass(_ctx.n("circle-svg")),
@@ -12304,22 +12550,22 @@ function render$l(_ctx, _cache) {
   }, [_ctx.track ? (openBlock(), createElementBlock("circle", {
     key: 0,
     class: normalizeClass(_ctx.n("circle-background")),
-    cx: _ctx.size / 2,
-    cy: _ctx.size / 2,
+    cx: _ctx.multiplySizeUnit(_ctx.size, 0.5),
+    cy: _ctx.multiplySizeUnit(_ctx.size, 0.5),
     r: _ctx.circleProps.radius,
     fill: "transparent",
-    "stroke-width": _ctx.lineWidth,
+    "stroke-width": _ctx.toSizeUnit(_ctx.lineWidth),
     style: normalizeStyle({
       strokeDasharray: _ctx.circleProps.perimeter,
       stroke: _ctx.trackColor
     })
   }, null, 14, _hoisted_2$3)) : createCommentVNode("v-if", true), createElementVNode("circle", {
     class: normalizeClass(_ctx.n("circle-certain")),
-    cx: _ctx.size / 2,
-    cy: _ctx.size / 2,
+    cx: _ctx.multiplySizeUnit(_ctx.size, 0.5),
+    cy: _ctx.multiplySizeUnit(_ctx.size, 0.5),
     r: _ctx.circleProps.radius,
     fill: "transparent",
-    "stroke-width": _ctx.lineWidth,
+    "stroke-width": _ctx.toSizeUnit(_ctx.lineWidth),
     style: normalizeStyle({
       strokeDasharray: _ctx.circleProps.strokeDasharray,
       stroke: _ctx.color
@@ -12350,9 +12596,9 @@ var Progress = defineComponent({
         lineWidth,
         value
       } = props2;
-      var viewBox = "0 0 " + size + " " + size;
+      var viewBox = "0 0 " + toPxNum(size) + " " + toPxNum(size);
       var roundValue = toNumber(value) > 100 ? 100 : Math.round(toNumber(value));
-      var radius = (size - toNumber(lineWidth)) / 2;
+      var radius = (toPxNum(size) - toPxNum(lineWidth)) / 2;
       var perimeter = 2 * Math.PI * radius;
       var strokeDasharray = roundValue / 100 * perimeter + ", " + perimeter;
       return {
@@ -12366,6 +12612,8 @@ var Progress = defineComponent({
     return {
       n: n$n,
       classes: classes$i,
+      toSizeUnit,
+      multiplySizeUnit,
       linearProps,
       circleProps
     };
@@ -12981,12 +13229,10 @@ var props$f = {
     default: "star-outline"
   },
   size: {
-    type: [String, Number],
-    default: "24"
+    type: [String, Number]
   },
   gap: {
-    type: [String, Number],
-    default: "2"
+    type: [String, Number]
   },
   namespace: {
     type: String
@@ -13033,7 +13279,7 @@ function render$h(_ctx, _cache) {
   var _component_var_form_details = resolveComponent("var-form-details");
   var _directive_ripple = resolveDirective("ripple");
   return openBlock(), createElementBlock("div", {
-    class: normalizeClass(_ctx.n("warp"))
+    class: normalizeClass(_ctx.n("wrap"))
   }, [createElementVNode("div", {
     class: normalizeClass(_ctx.n())
   }, [(openBlock(true), createElementBlock(Fragment, null, renderList(_ctx.toNumber(_ctx.count), (val) => {
@@ -13043,13 +13289,15 @@ function render$h(_ctx, _cache) {
       class: normalizeClass(_ctx.getClass(val)),
       onClick: ($event) => _ctx.handleClick(val, $event)
     }, [createVNode(_component_var_icon, {
+      class: normalizeClass(_ctx.n("content-icon")),
+      "var-rate-cover": "",
       transition: 0,
       namespace: _ctx.namespace,
       name: _ctx.getIconName(val),
       style: normalizeStyle({
         fontSize: _ctx.toSizeUnit(_ctx.size)
       })
-    }, null, 8, ["namespace", "name", "style"])], 14, _hoisted_1$5)), [[_directive_ripple, {
+    }, null, 8, ["class", "namespace", "name", "style"])], 14, _hoisted_1$5)), [[_directive_ripple, {
       disabled: _ctx.formReadonly || _ctx.readonly || _ctx.formDisabled || _ctx.disabled || !_ctx.ripple
     }]]);
   }), 128))], 2), createVNode(_component_var_form_details, {
@@ -13409,6 +13657,7 @@ function render$f(_ctx, _cache) {
     onClose: _ctx.handleBlur
   }, {
     menu: withCtx(() => [createElementVNode("div", {
+      ref: "menuEl",
       class: normalizeClass(_ctx.n("scroller"))
     }, [renderSlot(_ctx.$slots, "default")], 2)]),
     default: withCtx(() => [createElementVNode("div", {
@@ -13513,6 +13762,7 @@ var Select = defineComponent({
       validate: v,
       resetValidation
     } = useValidation();
+    var menuEl = ref(null);
     var computeLabel = () => {
       var {
         multiple: multiple2,
@@ -13550,6 +13800,7 @@ var Select = defineComponent({
       return label2.value;
     };
     var findLabel = (modelValue) => {
+      var _option$label$value, _option;
       var option2 = options.find((_ref2) => {
         var {
           value
@@ -13564,7 +13815,7 @@ var Select = defineComponent({
           return label2.value === modelValue;
         });
       }
-      return option2.label.value;
+      return (_option$label$value = (_option = option2) == null ? void 0 : _option.label.value) != null ? _option$label$value : "";
     };
     var computePlaceholderState = () => {
       var {
@@ -13599,6 +13850,7 @@ var Select = defineComponent({
       isFocus.value = true;
       call(onFocus);
       validateWithTrigger("onFocus");
+      detectBoundary();
     };
     var handleBlur = () => {
       var {
@@ -13702,6 +13954,7 @@ var Select = defineComponent({
       wrapWidth.value = getWrapWidth();
       offsetY.value = getOffsetY() + toPxNum(props2.offsetY);
       isFocus.value = true;
+      detectBoundary();
     };
     var blur = () => {
       isFocus.value = false;
@@ -13710,6 +13963,23 @@ var Select = defineComponent({
     var reset = () => {
       call(props2["onUpdate:modelValue"], props2.multiple ? [] : void 0);
       resetValidation();
+    };
+    var detectBoundary = () => {
+      var {
+        body
+      } = document;
+      nextTick(() => {
+        var _menuEl$value, _menuEl$value2;
+        var {
+          offsetTop: menuOffsetTop,
+          offsetHeight: menuOffsetHeight
+        } = (_menuEl$value = menuEl.value) == null ? void 0 : _menuEl$value.parentElement;
+        var menuOffsetBottom = body.scrollHeight - menuOffsetHeight - menuOffsetTop;
+        if (menuOffsetTop < 0)
+          offsetY.value = getOffsetY();
+        if (menuOffsetBottom < 0)
+          offsetY.value -= ((_menuEl$value2 = menuEl.value) == null ? void 0 : _menuEl$value2.parentElement).offsetHeight - getOffsetY();
+      });
     };
     watch(() => props2.multiple, () => {
       var {
@@ -13743,6 +14013,7 @@ var Select = defineComponent({
       formDisabled: form == null ? void 0 : form.disabled,
       label,
       labels,
+      menuEl,
       n: n$h,
       classes: classes$d,
       computePlaceholderState,
@@ -13980,8 +14251,8 @@ function render$d(_ctx, _cache) {
   }, [createElementVNode("div", {
     class: normalizeClass(_ctx.classes(_ctx.n("block"), [_ctx.isDisabled, _ctx.n("--disabled")], [_ctx.errorMessage, _ctx.n("--error")])),
     style: normalizeStyle({
-      height: _ctx.thumbSize === void 0 ? _ctx.thumbSize : 3 * _ctx.toNumber(_ctx.thumbSize) + "px",
-      margin: _ctx.thumbSize === void 0 ? _ctx.thumbSize : "0 " + _ctx.toNumber(_ctx.thumbSize) / 2 + "px"
+      height: _ctx.thumbSize === void 0 ? _ctx.thumbSize : _ctx.multiplySizeUnit(_ctx.thumbSize, 3),
+      margin: _ctx.thumbSize === void 0 ? _ctx.thumbSize : "0 " + _ctx.multiplySizeUnit(_ctx.thumbSize, 0.5)
     }),
     ref: "sliderEl",
     onClick: _cache[0] || (_cache[0] = function() {
@@ -13993,7 +14264,7 @@ function render$d(_ctx, _cache) {
     class: normalizeClass(_ctx.n("track-background")),
     style: normalizeStyle({
       background: _ctx.trackColor,
-      height: _ctx.trackHeight + "px"
+      height: _ctx.multiplySizeUnit(_ctx.trackHeight)
     })
   }, null, 6), createElementVNode("div", {
     class: normalizeClass(_ctx.n("track-fill")),
@@ -14016,8 +14287,8 @@ function render$d(_ctx, _cache) {
       class: normalizeClass(_ctx.n("thumb-block")),
       style: normalizeStyle({
         background: _ctx.thumbColor,
-        height: _ctx.thumbSize + "px",
-        width: _ctx.thumbSize + "px"
+        height: _ctx.multiplySizeUnit(_ctx.thumbSize),
+        width: _ctx.multiplySizeUnit(_ctx.thumbSize)
       })
     }, null, 6), createElementVNode("div", {
       class: normalizeClass(_ctx.classes(_ctx.n("thumb-ripple"), [_ctx.thumbsProps[item.enumValue].active, _ctx.n("thumb-ripple--active")])),
@@ -14029,8 +14300,8 @@ function render$d(_ctx, _cache) {
       style: normalizeStyle({
         background: _ctx.labelColor,
         color: _ctx.labelTextColor,
-        height: _ctx.thumbSize === void 0 ? _ctx.thumbSize : 2 * _ctx.toNumber(_ctx.thumbSize) + "px",
-        width: _ctx.thumbSize === void 0 ? _ctx.thumbSize : 2 * _ctx.toNumber(_ctx.thumbSize) + "px"
+        height: _ctx.thumbSize === void 0 ? _ctx.thumbSize : _ctx.multiplySizeUnit(_ctx.thumbSize, 2),
+        width: _ctx.thumbSize === void 0 ? _ctx.thumbSize : _ctx.multiplySizeUnit(_ctx.thumbSize, 2)
       })
     }, [createElementVNode("span", null, toDisplayString(item.value), 1)], 6)])], 46, _hoisted_1$3);
   }), 128))], 6), createVNode(_component_var_form_details, {
@@ -14092,7 +14363,7 @@ var Slider = defineComponent({
     var getRippleSize = (item) => {
       var size;
       if (props2.thumbSize !== void 0) {
-        size = thumbsProps[item.enumValue].active ? 3 * toNumber(props2.thumbSize) + "px" : "0px";
+        size = thumbsProps[item.enumValue].active ? multiplySizeUnit(props2.thumbSize, 3) : "0px";
       }
       return {
         height: size,
@@ -14286,6 +14557,7 @@ var Slider = defineComponent({
       errorMessage,
       thumbsProps,
       thumbList,
+      multiplySizeUnit,
       toNumber,
       getRippleSize,
       showLabel,
@@ -14795,6 +15067,7 @@ var Space = defineComponent({
       children = flatten(children);
       var lastIndex = children.length - 1;
       var spacers = children.map((child, index) => {
+        var width = direction === "row" ? void 0 : "100%";
         var margin = "0";
         if (direction === "row") {
           if (justify === "start" || justify === "center" || justify === "end") {
@@ -14820,7 +15093,8 @@ var Space = defineComponent({
         }
         return createVNode("div", {
           "style": {
-            margin
+            margin,
+            width
           }
         }, [child]);
       });
@@ -15141,8 +15415,7 @@ var props$6 = {
     type: String
   },
   size: {
-    type: [String, Number],
-    default: 20
+    type: [String, Number]
   },
   rules: {
     type: Array
@@ -15179,16 +15452,16 @@ function render$8(_ctx, _cache) {
     style: normalizeStyle(_ctx.styleComputed.switch)
   }, [createElementVNode("div", {
     style: normalizeStyle(_ctx.styleComputed.track),
-    class: normalizeClass(_ctx.classes(_ctx.n("track"), [_ctx.modelValue === _ctx.activeValue, _ctx.n("track-active")], [_ctx.errorMessage, _ctx.n("track-error")]))
+    class: normalizeClass(_ctx.classes(_ctx.n("track"), [_ctx.modelValue === _ctx.activeValue, _ctx.n("track--active")], [_ctx.errorMessage, _ctx.n("track--error")]))
   }, null, 6), withDirectives((openBlock(), createElementBlock("div", {
-    class: normalizeClass(_ctx.n("ripple")),
+    class: normalizeClass(_ctx.classes(_ctx.n("ripple"), [_ctx.modelValue === _ctx.activeValue, _ctx.n("ripple--active")])),
     style: normalizeStyle(_ctx.styleComputed.ripple)
   }, [createElementVNode("div", {
     style: normalizeStyle(_ctx.styleComputed.handle),
-    class: normalizeClass(_ctx.classes(_ctx.n("handle"), "var-elevation--2", [_ctx.modelValue === _ctx.activeValue, _ctx.n("handle-active")], [_ctx.errorMessage, _ctx.n("handle-error")]))
+    class: normalizeClass(_ctx.classes(_ctx.n("handle"), "var-elevation--2", [_ctx.modelValue === _ctx.activeValue, _ctx.n("handle--active")], [_ctx.errorMessage, _ctx.n("handle--error")]))
   }, [_ctx.loading ? (openBlock(), createBlock(_component_var_loading, {
     key: 0,
-    radius: _ctx.toNumber(_ctx.size) / 2 - 2
+    radius: _ctx.radius
   }, null, 8, ["radius"])) : createCommentVNode("v-if", true)], 6)], 6)), [[_directive_ripple, {
     disabled: !_ctx.ripple || _ctx.disabled || _ctx.loading || _ctx.formDisabled
   }]])], 6), createVNode(_component_var_form_details, {
@@ -15228,34 +15501,37 @@ var Switch = defineComponent({
         loadingColor,
         activeValue
       } = props2;
-      var sizeNum = toNumber(size);
-      var switchWidth = sizeNum * 2;
-      var switchHeight = sizeNum * 1.2;
       return {
         handle: {
-          width: size + "px",
-          height: size + "px",
+          width: multiplySizeUnit(size),
+          height: multiplySizeUnit(size),
           backgroundColor: modelValue === activeValue ? color || "" : closeColor || "",
           color: loadingColor && loadingColor
         },
         ripple: {
-          left: modelValue === activeValue ? sizeNum / 2 + "px" : "-" + sizeNum / 2 + "px",
+          left: modelValue === activeValue ? multiplySizeUnit(size, 0.5) : "-" + multiplySizeUnit(size, 0.5),
           color: modelValue === activeValue ? color || "" : closeColor || "#999",
-          width: sizeNum * 2 + "px",
-          height: sizeNum * 2 + "px"
+          width: multiplySizeUnit(size, 2),
+          height: multiplySizeUnit(size, 2)
         },
         track: {
-          height: switchHeight * 0.6 + "px",
-          width: switchWidth - 2 + "px",
-          borderRadius: switchWidth / 3 + "px",
+          height: multiplySizeUnit(size, 0.72),
+          width: multiplySizeUnit(size, 1.9),
+          borderRadius: multiplySizeUnit(size, 2 / 3),
           filter: modelValue === activeValue || errorMessage != null && errorMessage.value ? "opacity(.6)" : "brightness(.6)",
           backgroundColor: modelValue === activeValue ? color || "" : closeColor || ""
         },
         switch: {
-          height: switchHeight + "px",
-          width: switchWidth + "px"
+          height: multiplySizeUnit(size, 1.2),
+          width: multiplySizeUnit(size, 2)
         }
       };
+    });
+    var radius = computed(() => {
+      var {
+        size = "5.333vw"
+      } = props2;
+      return multiplySizeUnit(size, 0.4);
     });
     var switchActive = (event) => {
       var {
@@ -15291,7 +15567,7 @@ var Switch = defineComponent({
       n: n$8,
       classes: classes$7,
       switchActive,
-      toNumber,
+      radius,
       styleComputed,
       errorMessage,
       formDisabled: form == null ? void 0 : form.disabled,
