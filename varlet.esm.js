@@ -1188,7 +1188,7 @@ var isHTMLSupportImage = (val) => {
   if (val == null) {
     return false;
   }
-  return val.startsWith("data:image") || /\.(png|jpg|gif|jpeg|svg)$/.test(val);
+  return val.startsWith("data:image") || /\.(png|jpg|gif|jpeg|svg|webp)$/.test(val);
 };
 var isHTMLSupportVideo = (val) => {
   if (val == null) {
@@ -3850,6 +3850,9 @@ function render$I(_ctx, _cache) {
     ref: "contentEl",
     onTransitionend: _cache[1] || (_cache[1] = function() {
       return _ctx.transitionend && _ctx.transitionend(...arguments);
+    }),
+    onTransitionstart: _cache[2] || (_cache[2] = function() {
+      return _ctx.start && _ctx.start(...arguments);
     })
   }, [createElementVNode("div", {
     class: normalizeClass(_ctx.n("content-wrap"))
@@ -3868,6 +3871,7 @@ var CollapseItem = defineComponent({
       collapse,
       bindCollapse
     } = useCollapse();
+    var isInitToTrigger = true;
     var contentEl = ref(null);
     var show = ref(false);
     var isShow = ref(false);
@@ -3902,19 +3906,34 @@ var CollapseItem = defineComponent({
         contentEl.value.style.height = 0 + "px";
         requestAnimationFrame(() => {
           contentEl.value.style.height = offsetHeight + "px";
+          if (!isInitToTrigger)
+            return;
+          nextTickFrame(() => {
+            if (isInitToTrigger)
+              transitionend();
+          });
         });
       });
+    };
+    var start = () => {
+      isInitToTrigger = false;
     };
     var closePanel = () => {
       if (!contentEl.value)
         return;
-      contentEl.value.style.height = 0 + "px";
+      var {
+        offsetHeight
+      } = contentEl.value;
+      contentEl.value.style.height = offsetHeight + "px";
+      requestAnimationFrame(() => {
+        contentEl.value.style.height = 0 + "px";
+      });
     };
     var transitionend = () => {
       if (!isShow.value) {
         show.value = false;
-        contentEl.value.style.height = "";
       }
+      contentEl.value.style.height = "";
     };
     var collapseItemProvider = {
       index,
@@ -3930,6 +3949,7 @@ var CollapseItem = defineComponent({
     });
     return {
       n: n$L,
+      start,
       classes: classes$C,
       show,
       isShow,
@@ -7258,6 +7278,9 @@ var props$z = {
     type: Boolean,
     default: true
   },
+  onPreview: {
+    type: Function
+  },
   onChange: {
     type: Function
   },
@@ -8050,8 +8073,8 @@ function render$B(_ctx, _cache) {
     class: normalizeClass(_ctx.classes(_ctx.n("title-year"), [_ctx.isYearPanel, _ctx.n("title-year--active")])),
     onClick: _cache[0] || (_cache[0] = ($event) => _ctx.clickEl("year"))
   }, [renderSlot(_ctx.$slots, "year", {
-    year: _ctx.previewYear
-  }, () => [createTextVNode(toDisplayString(_ctx.previewYear), 1)])], 2), createElementVNode("div", {
+    year: _ctx.chooseYear
+  }, () => [createTextVNode(toDisplayString(_ctx.chooseYear), 1)])], 2), createElementVNode("div", {
     class: normalizeClass(_ctx.classes(_ctx.n("title-date"), [!_ctx.isYearPanel, _ctx.n("title-date--active")], [_ctx.range, _ctx.n("title-date--range")])),
     onClick: _cache[1] || (_cache[1] = ($event) => _ctx.clickEl("date"))
   }, [createVNode(Transition, {
@@ -8355,6 +8378,7 @@ var DatePicker = defineComponent({
         range,
         multiple,
         onChange,
+        onPreview,
         "onUpdate:modelValue": updateModelValue
       } = props2;
       reverse.value = getReverse("month", month);
@@ -8370,6 +8394,7 @@ var DatePicker = defineComponent({
         }
       } else {
         previewMonth.value = month;
+        call(onPreview, toNumber(previewYear.value), toNumber(previewMonth.value.index));
       }
       isMonthPanel.value = false;
     };
@@ -8377,6 +8402,7 @@ var DatePicker = defineComponent({
       previewYear.value = "" + year;
       isYearPanel.value = false;
       isMonthPanel.value = true;
+      call(props2.onPreview, toNumber(previewYear.value), toNumber(previewMonth.value.index));
     };
     var checkPreview = (type, checkType2) => {
       var changeValue = checkType2 === "prev" ? -1 : 1;
@@ -8394,6 +8420,7 @@ var DatePicker = defineComponent({
         }
         previewMonth.value = MONTH_LIST.find((month) => toNumber(month.index) === checkIndex);
       }
+      call(props2.onPreview, toNumber(previewYear.value), toNumber(previewMonth.value.index));
     };
     var checkValue = () => {
       if ((props2.multiple || props2.range) && !isArray(props2.modelValue)) {
@@ -10880,7 +10907,7 @@ function render$q(_ctx, _cache) {
   var _component_var_form_details = resolveComponent("var-form-details");
   return openBlock(), createElementBlock("div", {
     class: normalizeClass(_ctx.classes(_ctx.n(), "var--box", [_ctx.disabled, _ctx.n("--disabled")])),
-    onClick: _cache[8] || (_cache[8] = function() {
+    onClick: _cache[10] || (_cache[10] = function() {
       return _ctx.handleClick && _ctx.handleClick(...arguments);
     })
   }, [createElementVNode("div", {
@@ -10922,6 +10949,9 @@ function render$q(_ctx, _cache) {
     }),
     onChange: _cache[3] || (_cache[3] = function() {
       return _ctx.handleChange && _ctx.handleChange(...arguments);
+    }),
+    onTouchstart: _cache[4] || (_cache[4] = function() {
+      return _ctx.handleTouchstart && _ctx.handleTouchstart(...arguments);
     })
   }, "\n        ", 46, _hoisted_1$9)) : (openBlock(), createElementBlock("input", {
     key: 2,
@@ -10937,17 +10967,20 @@ function render$q(_ctx, _cache) {
       color: _ctx.textColor,
       caretColor: !_ctx.errorMessage ? _ctx.focusColor : void 0
     }),
-    onFocus: _cache[4] || (_cache[4] = function() {
+    onFocus: _cache[5] || (_cache[5] = function() {
       return _ctx.handleFocus && _ctx.handleFocus(...arguments);
     }),
-    onBlur: _cache[5] || (_cache[5] = function() {
+    onBlur: _cache[6] || (_cache[6] = function() {
       return _ctx.handleBlur && _ctx.handleBlur(...arguments);
     }),
-    onInput: _cache[6] || (_cache[6] = function() {
+    onInput: _cache[7] || (_cache[7] = function() {
       return _ctx.handleInput && _ctx.handleInput(...arguments);
     }),
-    onChange: _cache[7] || (_cache[7] = function() {
+    onChange: _cache[8] || (_cache[8] = function() {
       return _ctx.handleChange && _ctx.handleChange(...arguments);
+    }),
+    onTouchstart: _cache[9] || (_cache[9] = function() {
+      return _ctx.handleTouchstart && _ctx.handleTouchstart(...arguments);
     })
   }, null, 46, _hoisted_2$5)), createElementVNode("label", {
     class: normalizeClass(_ctx.classes("var--ellipsis", [_ctx.isFocus, _ctx.n("--focus")], [_ctx.errorMessage, _ctx.n("--error")], [_ctx.textarea, _ctx.n("textarea-placeholder"), _ctx.n("placeholder")], _ctx.computePlaceholderState(), [!_ctx.hint, _ctx.n("--placeholder-non-hint")])),
@@ -11089,6 +11122,16 @@ var Input = defineComponent({
       validateWithTrigger("onClick");
     };
     var withTrim = (value) => props2.modelModifiers.trim ? value.trim() : value;
+    var handleTouchstart = (e) => {
+      var {
+        disabled,
+        readonly
+      } = props2;
+      if (form != null && form.disabled.value || form != null && form.readonly.value || disabled || readonly) {
+        return;
+      }
+      e.stopPropagation();
+    };
     var reset = () => {
       call(props2["onUpdate:modelValue"], "");
       resetValidation();
@@ -11129,6 +11172,7 @@ var Input = defineComponent({
       handleChange,
       handleClear,
       handleClick,
+      handleTouchstart,
       validate,
       resetValidation,
       reset,
@@ -11921,7 +11965,7 @@ var Pagination = defineComponent({
         }
       }
       pageList.value = list2;
-      if (oldCurrent !== void 0)
+      if (oldCurrent !== void 0 && pageCount.value > 0)
         onChange == null ? void 0 : onChange(newCurrent, newSize);
       (_props$onUpdateCurre = props2["onUpdate:current"]) == null ? void 0 : _props$onUpdateCurre.call(props2, newCurrent);
       (_props$onUpdateSize = props2["onUpdate:size"]) == null ? void 0 : _props$onUpdateSize.call(props2, newSize);
@@ -12741,8 +12785,8 @@ var PullRefresh = defineComponent({
     var controlStyle = computed(() => ({
       transform: "translate3d(0px, " + distance.value + "px, 0px) translate(-50%, 0)",
       transition: isEnd.value ? "transform " + props2.animationDuration + "ms" : void 0,
-      background: props2.successBgColor || props2.bgColor,
-      color: props2.successColor || props2.color
+      background: isSuccess.value ? props2.successBgColor : props2.bgColor,
+      color: isSuccess.value ? props2.successColor : props2.color
     }));
     var isSuccess = computed(() => refreshStatus.value === "success");
     var changeIcon = () => {
@@ -13968,17 +14012,19 @@ var Select = defineComponent({
       var {
         body
       } = document;
+      var bodyScrollHeight = body.scrollHeight;
       nextTick(() => {
-        var _menuEl$value, _menuEl$value2;
+        var _menuEl$value;
         var {
-          offsetTop: menuOffsetTop,
           offsetHeight: menuOffsetHeight
         } = (_menuEl$value = menuEl.value) == null ? void 0 : _menuEl$value.parentElement;
-        var menuOffsetBottom = body.scrollHeight - menuOffsetHeight - menuOffsetTop;
-        if (menuOffsetTop < 0)
+        var wrapOffsetTop = getTop$1(wrapEl.value);
+        if (wrapOffsetTop + offsetY.value < 0) {
           offsetY.value = getOffsetY();
-        if (menuOffsetBottom < 0)
-          offsetY.value -= ((_menuEl$value2 = menuEl.value) == null ? void 0 : _menuEl$value2.parentElement).offsetHeight - getOffsetY();
+        }
+        if (menuOffsetHeight + wrapOffsetTop + offsetY.value > bodyScrollHeight) {
+          offsetY.value -= menuOffsetHeight - getOffsetY();
+        }
       });
     };
     watch(() => props2.multiple, () => {
@@ -14097,7 +14143,8 @@ function render$e(_ctx, _cache) {
     })
   }, [createElementVNode("div", {
     class: normalizeClass(_ctx.n("--animation"))
-  }, null, 2)], 6)) : createCommentVNode("v-if", true), createElementVNode("div", {
+  }, null, 2)], 6)) : createCommentVNode("v-if", true), _ctx.avatar || _ctx.title || _ctx.toNumber(_ctx.rows) > 0 ? (openBlock(), createElementBlock("div", {
+    key: 1,
     class: normalizeClass(_ctx.n("article"))
   }, [_ctx.avatar ? (openBlock(), createElementBlock("div", {
     key: 0,
@@ -14108,7 +14155,8 @@ function render$e(_ctx, _cache) {
     })
   }, [createElementVNode("div", {
     class: normalizeClass(_ctx.n("--animation"))
-  }, null, 2)], 6)) : createCommentVNode("v-if", true), createElementVNode("div", {
+  }, null, 2)], 6)) : createCommentVNode("v-if", true), _ctx.title || _ctx.toNumber(_ctx.rows) > 0 ? (openBlock(), createElementBlock("div", {
+    key: 1,
     class: normalizeClass(_ctx.n("section"))
   }, [_ctx.title ? (openBlock(), createElementBlock("div", {
     key: 0,
@@ -14128,7 +14176,7 @@ function render$e(_ctx, _cache) {
     }, [createElementVNode("div", {
       class: normalizeClass(_ctx.n("--animation"))
     }, null, 2)], 6);
-  }), 128))], 2)], 2)], 2)) : createCommentVNode("v-if", true), _ctx.loading && _ctx.fullscreen ? (openBlock(), createElementBlock("div", {
+  }), 128))], 2)) : createCommentVNode("v-if", true)], 2)) : createCommentVNode("v-if", true)], 2)) : createCommentVNode("v-if", true), _ctx.loading && _ctx.fullscreen ? (openBlock(), createElementBlock("div", {
     key: 2,
     class: normalizeClass(_ctx.n("fullscreen")),
     style: normalizeStyle({
@@ -14277,8 +14325,8 @@ function render$d(_ctx, _cache) {
         left: item.value + "%",
         zIndex: _ctx.thumbsProps[item.enumValue].active ? 1 : void 0
       }),
-      onTouchstart: ($event) => _ctx.start($event, item.enumValue),
-      onTouchmove: ($event) => _ctx.move($event, item.enumValue),
+      onTouchstart: withModifiers(($event) => _ctx.start($event, item.enumValue), ["stop"]),
+      onTouchmove: withModifiers(($event) => _ctx.move($event, item.enumValue), ["stop"]),
       onTouchend: ($event) => _ctx.end(item.enumValue),
       onTouchcancel: ($event) => _ctx.end(item.enumValue)
     }, [renderSlot(_ctx.$slots, "button", {
